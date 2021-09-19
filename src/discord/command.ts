@@ -1,47 +1,35 @@
 import * as Discord from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { APIInteractionGuildMember } from "discord-api-types";
+import { CommandComponentHandlerBase, HandlerConstructor } from "./base";
 
-export abstract class Command {
-
-    constructor(discordClient: Discord.Client) {
-        this.discordClient = discordClient;
-    }
-
-    protected abstract ftn(int: Discord.CommandInteraction, ... args: any[]):
-    Promise<Discord.MessagePayload | Discord.InteractionReplyOptions | string | void> | Discord.MessagePayload | Discord.InteractionReplyOptions | string | void;
+export abstract class CommandHandler extends CommandComponentHandlerBase {
     
-    public abstract readonly longRunning: boolean;
     public abstract readonly slashData: Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">
     public abstract readonly type: "GUILD" | "GLOBAL";
     public abstract readonly permissions: Discord.ApplicationCommandPermissionData[];
 
-    public readonly discordClient: Discord.Client;
-
-    // in order to perform any preprocessing
-    public async execute(int: Discord.CommandInteraction, ... args: any[]) {
-        if (this.longRunning) await int.deferReply();
-        return await this.ftn(int, ... args);
-    }
-
-    public isGuild(): this is GuildCommand {
+    public isGuild(): this is GuildCommandHandler {
         return this.type == "GUILD";
     }
 
-    public isGlobal(): this is GlobalCommand {
+    public isGlobal(): this is GlobalCommandHandler {
         return this.type == "GLOBAL";
     }
+
+    protected abstract override ftn(int: Discord.CommandInteraction, ...args: any[]):
+    Discord.Awaited<Discord.MessagePayload | Discord.InteractionReplyOptions | string | void>;
 }
 
-export abstract class GlobalCommand extends Command {
+export abstract class GlobalCommandHandler extends CommandHandler {
     public readonly type: "GLOBAL" = "GLOBAL";
 }
 
-export abstract class GuildCommand extends Command {
+export abstract class GuildCommandHandler extends CommandHandler {
     public readonly type: "GUILD" = "GUILD";
     public abstract readonly guildId: string | string[];
     protected abstract override ftn(int: Discord.CommandInteraction & { guildId: string, member: Discord.GuildMember | APIInteractionGuildMember }, ... args: any[]):
-    Promise<Discord.MessagePayload | Discord.InteractionReplyOptions | string | void> | Discord.MessagePayload | Discord.InteractionReplyOptions | string | void;
+    Discord.Awaited<Discord.MessagePayload | Discord.InteractionReplyOptions | string | void>;
 }
 
-export type CommandConstructor = new (discordClient: Discord.Client, ... args: any[]) => Command;
+export type CommandConstructor = HandlerConstructor<CommandHandler>;

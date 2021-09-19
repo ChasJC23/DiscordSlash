@@ -1,21 +1,16 @@
-import { Awaited, Client, ClientEvents } from "discord.js";
+import * as Discord from "discord.js";
+import { HandlerBase, HandlerConstructor } from "./base";
 
-export abstract class EventHandler<K extends keyof ClientEvents> {
-
-    constructor(discordClient: Client) {
-        this.discordClient = discordClient;
-    }
+export abstract class EventHandler<K extends keyof Discord.ClientEvents> extends HandlerBase {
 
     public abstract readonly eventType: K;
     public abstract readonly oneTime: boolean;
 
-    public readonly discordClient: Client;
-
-    public abstract ftn(... args: ClientEvents[K]): Awaited<void>;
+    protected abstract override ftn(... args: Discord.ClientEvents[K]): Discord.Awaited<void>;
 
     public start() {
-        this.discordClient.on(this.eventType, this.ftn);
+        this.discordClient.on(this.eventType, (... args: Discord.ClientEvents[K]) => this.ftn(... args));
     }
 }
 
-export type EventConstructor<K extends keyof ClientEvents> = new (discordClient: Client, ... args: any[]) => EventHandler<K>;
+export type EventConstructor<K extends keyof Discord.ClientEvents> = HandlerConstructor<EventHandler<K>>;

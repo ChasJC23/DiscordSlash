@@ -1,6 +1,6 @@
 import { REST } from "@discordjs/rest";
 import { Client, Intents } from "discord.js";
-import DiscordBot from "./discord/bot";
+import { DiscordBot } from "./discord";
 import * as path from "path";
 import { token, clientId } from "./config.json";
 
@@ -16,5 +16,5 @@ myBot.beginAwaitingEvents();
 botClient.login(token)
 .then(async () => {
     await myBot.registerCommands();
-    myBot.beginAwaitingCommands();
+    myBot.beginAwaitingInteractions();
 });

@@ -1,33 +1,44 @@
 import * as Discord from "discord.js";
-import {Command, GlobalCommand, GuildCommand, CommandConstructor} from "./command";
+import {CommandHandler, GlobalCommandHandler, GuildCommandHandler} from "./command";
 import { REST } from "@discordjs/rest";
 import { APIApplicationCommand, Routes } from "discord-api-types/v9";
 import { walkdirSync } from "../util/fsp";
-import { EventConstructor, EventHandler } from "./event";
+import { EventHandler } from "./event";
+import { ButtonHandler, ComponentHandler, SelectMenuHandler } from "./component";
+import { CommandComponentHandlerBase, HandlerBase, HandlerConstructor, ReplyableInteraction } from "./base";
 
-export default class DiscordBot<GlobalT extends GlobalCommand, GuildT extends GuildCommand, EventT extends EventHandler<any>> {
+export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends GuildCommandHandler, EventT extends EventHandler<any>, ButtonT extends ButtonHandler, SelectMenuT extends SelectMenuHandler> {
 
-    public defaultResponse: string | Discord.MessagePayload | Discord.InteractionReplyOptions;
-    public errorResponse: string | Discord.MessagePayload | Discord.InteractionReplyOptions;
+    public defaultResponse?: string | Discord.MessagePayload | Discord.InteractionReplyOptions;
+    public errorResponse?: string | Discord.MessagePayload | Discord.InteractionReplyOptions;
 
     public readonly discordClient: Discord.Client;
-    public readonly globalCommands: Discord.Collection<string, GlobalT>;
-    public readonly guildCommands: Discord.Collection<string, GuildT>;
-    public readonly allCommands: Discord.Collection<string, Command>;
-    public readonly allEvents: EventT[];
+
+    public readonly globalCommands: Discord.Collection<string, GlobalT>     = new Discord.Collection();
+    public readonly guildCommands:  Discord.Collection<string, GuildT>      = new Discord.Collection();
+    public readonly buttons:        Discord.Collection<string, ButtonT>     = new Discord.Collection();
+    public readonly selectMenus:    Discord.Collection<string, SelectMenuT> = new Discord.Collection();
+    
+    private _allEvents: EventT[] = [];
+    
+    public get allEvents() : EventT[] {
+        return this._allEvents;
+    }
+    
+    private set allEvents(v : EventT[]) {
+        this._allEvents = v;
+    }
+    
+    
     public readonly clientId: string;
     private readonly rest: REST;
 
     constructor(discordClient: Discord.Client, rest: REST, clientId: string,
-        defaultResponse: string | Discord.MessagePayload | Discord.InteractionReplyOptions = "command completed successfully!",
-        errorResponse: string | Discord.MessagePayload | Discord.InteractionReplyOptions = "an error occurred running that command"
+        defaultResponse?: string | Discord.MessagePayload | Discord.InteractionReplyOptions,
+        errorResponse?: string | Discord.MessagePayload | Discord.InteractionReplyOptions
     ) {
         this.discordClient = discordClient;
         this.rest = rest;
-        this.globalCommands = new Discord.Collection();
-        this.guildCommands = new Discord.Collection();
-        this.allCommands = new Discord.Collection();
-        this.allEvents = [];
         this.clientId = clientId;
         this.defaultResponse = defaultResponse;
         this.errorResponse = errorResponse;
@@ -36,27 +47,43 @@ export default class DiscordBot<GlobalT extends GlobalCommand, GuildT extends Gu
     public loadCommands(commandPath: string, ... constructorArgs: any[]) {
         this.globalCommands.clear();
         this.guildCommands.clear();
-        this.allCommands.clear();
-        const commandFiles = walkdirSync(commandPath).filter(file => file.endsWith('.js'));
-        for (const file of commandFiles) {
-            const CommandClass = require(file).default as CommandConstructor;
-            const command = new CommandClass(this.discordClient, ... constructorArgs);
-            if (command.isGlobal()) {
-                this.globalCommands.set(command.slashData.name, command as GlobalT);
+        this.load<CommandHandler>(commandPath, constructorArgs, (obj, value) => {
+            if (value.isGlobal()) {
+                obj.globalCommands.set(value.slashData.name, value as GlobalT);
             }
-            if (command.isGuild()) {
-                this.guildCommands.set(command.slashData.name, command as GuildT);
+            if (value.isGuild()) {
+                obj.guildCommands.set(value.slashData.name, value as GuildT);
             }
-            this.allCommands.set(command.slashData.name, command);
-        }
+        })
     }
 
     public loadEvents(eventPath: string, ... constructorArgs: any[]) {
-        const eventFiles = walkdirSync(eventPath).filter(file => file.endsWith('.js'));
-        for (const file of eventFiles) {
-            const EventClass = require(file).default as EventConstructor<any>;
-            const event = new EventClass(this.discordClient, ... constructorArgs);
-            this.allEvents.push(event as EventT);
+        this.allEvents = [];
+        this.load<EventHandler<any>>(eventPath, constructorArgs, (obj, value) => {
+            obj.allEvents.push(value as EventT);
+        })
+    }
+
+    public loadComponents(componentPath: string, ... constructorArgs: any[]) {
+        this.buttons.clear();
+        this.selectMenus.clear();
+        this.load<ComponentHandler>(componentPath, constructorArgs, (obj, value) => {
+            if (!value.component.customId) throw new Error("Components must have a custom ID");
+            if (value.isButton()) {
+                obj.buttons.set(value.component.customId, value as ButtonT);
+            }
+            if (value.isSelectMenu()) {
+                obj.selectMenus.set(value.component.customId, value as SelectMenuT);
+            }
+        })
+    }
+
+    private load<T extends HandlerBase>(handlerPath: string, constructorArgs: any[], setter: (obj: this, value: T) => void) {
+        const handlerFiles = walkdirSync(handlerPath).filter(file => file.endsWith('.js'));
+        for (const file of handlerFiles) {
+            const HandlerClass = require(file).default as HandlerConstructor<T>;
+            const handler = new HandlerClass(this.discordClient, ... constructorArgs);
+            setter(this, handler);
         }
     }
 
@@ -94,7 +121,7 @@ export default class DiscordBot<GlobalT extends GlobalCommand, GuildT extends Gu
         }
     }
 
-    public beginAwaitingCommands(... args: any[]) {
+    public beginAwaitingInteractions(... args: any[]) {
         this.discordClient.on("interactionCreate", async (int) => await this.onInteractionCreate(int, ... args));
     }
 
@@ -105,18 +132,30 @@ export default class DiscordBot<GlobalT extends GlobalCommand, GuildT extends Gu
     }
 
     private async onInteractionCreate(interaction: Discord.Interaction, ... args: any[]) {
-        if (!interaction.isCommand()) return;
 
-        const { commandName } = interaction;
-        const command = this.allCommands.get(commandName);
+        if (interaction.isCommand()) {
+            const { commandName } = interaction;
+            this.interactionHandle<string, CommandHandler>(interaction, args, commandName, this.guildCommands, this.globalCommands);
+        }
+        if (interaction.isButton()) {
+            const { customId } = interaction;
+            this.interactionHandle(interaction, args, customId, this.buttons);
+        }
+        if (interaction.isSelectMenu()) {
+            const { customId } = interaction;
+            this.interactionHandle(interaction, args, customId, this.selectMenus);
+        }
+    }
 
-        if (!command) return;
+    private async interactionHandle<K, V extends CommandComponentHandlerBase>(interaction: ReplyableInteraction, args: any[], key: K, ... collections: Discord.Collection<K, V>[]) {
+
+        const handler = collections.map((v) => v.get(key)).reduce((a, b) => a ?? b);
+        if (!handler) return;
 
         let response;
 
         try {
-            response = await command.execute(interaction, ... args);
-            if (!response) response = this.defaultResponse;
+            response = await handler.execute(interaction, ... args);
         }
         catch (err) {
             console.error(err);
@@ -124,7 +163,7 @@ export default class DiscordBot<GlobalT extends GlobalCommand, GuildT extends Gu
         }
 
         try {
-            await interaction.reply(response);
+            if (response) await interaction.reply(response);
         }
         catch (err) {
             console.error(err);
