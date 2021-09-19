@@ -27,8 +27,8 @@ export abstract class CommandComponentHandlerBase extends HandlerBase {
         return await this.ftn(int, ... args);
     }
 
-    protected abstract override ftn(int: ReplyableInteraction, ... args: any[]):
-    Discord.Awaited<Discord.MessagePayload | Discord.InteractionReplyOptions | string | void>;
+    protected abstract override ftn(int: ReplyableInteraction, ... args: any[]): HandlerReturn;
 }
 
 export type HandlerConstructor<T extends HandlerBase> = new (discordClient: Discord.Client, ... args: any[]) => T;
+export type HandlerReturn = Discord.Awaited<Discord.MessagePayload | Discord.InteractionReplyOptions | string | void>;

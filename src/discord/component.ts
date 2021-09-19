@@ -1,5 +1,5 @@
 import * as Discord from "discord.js";
-import { CommandComponentHandlerBase, HandlerConstructor } from "./base";
+import { CommandComponentHandlerBase, HandlerConstructor, HandlerReturn } from ".";
 
 export abstract class ComponentHandler extends CommandComponentHandlerBase {
 
@@ -14,8 +14,7 @@ export abstract class ComponentHandler extends CommandComponentHandlerBase {
         return this.type == "SELECT_MENU";
     }
 
-    protected abstract override ftn(int: Discord.MessageComponentInteraction, ... args: any[]):
-    Discord.Awaited<Discord.MessagePayload | Discord.InteractionReplyOptions | string | void>;
+    protected abstract override ftn(int: Discord.MessageComponentInteraction, ... args: any[]): HandlerReturn;
 }
 
 export abstract class ButtonHandler extends ComponentHandler {
@@ -23,8 +22,7 @@ export abstract class ButtonHandler extends ComponentHandler {
     public abstract readonly component: Discord.MessageButton;
     public readonly type = "BUTTON";
 
-    protected abstract override ftn(int: Discord.ButtonInteraction, ... args: any[]):
-    Discord.Awaited<Discord.MessagePayload | Discord.InteractionReplyOptions | string | void>;
+    protected abstract override ftn(int: Discord.ButtonInteraction, ... args: any[]): HandlerReturn;
 }
 
 export abstract class SelectMenuHandler extends ComponentHandler {
@@ -32,8 +30,7 @@ export abstract class SelectMenuHandler extends ComponentHandler {
     public abstract readonly component: Discord.MessageSelectMenu;
     public readonly type = "SELECT_MENU";
 
-    protected abstract override ftn(int: Discord.SelectMenuInteraction, ... args: any[]):
-    Discord.Awaited<Discord.MessagePayload | Discord.InteractionReplyOptions | string | void>;
+    protected abstract override ftn(int: Discord.SelectMenuInteraction, ... args: any[]): HandlerReturn;
 }
 
 export type ComponentConstructor = HandlerConstructor<ComponentHandler>;

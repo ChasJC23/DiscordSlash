@@ -1,5 +1,5 @@
 import * as Discord from "discord.js";
-import { HandlerBase, HandlerConstructor } from "./base";
+import { HandlerBase, HandlerConstructor } from ".";
 
 export abstract class EventHandler<K extends keyof Discord.ClientEvents> extends HandlerBase {
 

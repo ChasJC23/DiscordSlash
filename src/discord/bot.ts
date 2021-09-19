@@ -1,11 +1,8 @@
 import * as Discord from "discord.js";
-import {CommandHandler, GlobalCommandHandler, GuildCommandHandler} from "./command";
+import { ButtonHandler, CommandComponentHandlerBase, CommandHandler, ComponentHandler, EventHandler, GlobalCommandHandler, GuildCommandHandler, HandlerBase, HandlerConstructor, ReplyableInteraction, SelectMenuHandler } from ".";
 import { REST } from "@discordjs/rest";
 import { APIApplicationCommand, Routes } from "discord-api-types/v9";
 import { walkdirSync } from "../util/fsp";
-import { EventHandler } from "./event";
-import { ButtonHandler, ComponentHandler, SelectMenuHandler } from "./component";
-import { CommandComponentHandlerBase, HandlerBase, HandlerConstructor, ReplyableInteraction } from "./base";
 
 export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends GuildCommandHandler, EventT extends EventHandler<any>, ButtonT extends ButtonHandler, SelectMenuT extends SelectMenuHandler> {
 
@@ -114,7 +111,7 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
                 response.forEach((cmdResponse) => {
                     const commandInfo = new Discord.ApplicationCommand(this.discordClient, cmdResponse, undefined, guildId);
                     const myCommand = this.guildCommands.find((v) => v.slashData.name == commandInfo.name);
-                    if (!myCommand) return;
+                    if (!myCommand || myCommand.permissions === undefined) return;
                     commandInfo.permissions.set({ permissions: myCommand.permissions });
                 });
             }
@@ -122,7 +119,7 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
     }
 
     public beginAwaitingInteractions(... args: any[]) {
-        this.discordClient.on("interactionCreate", async (int) => await this.onInteractionCreate(int, ... args));
+        this.discordClient.on("interactionCreate", async (int) => await this.onInteractionCreate(int, args));
     }
 
     public beginAwaitingEvents() {
@@ -131,7 +128,7 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
         });
     }
 
-    private async onInteractionCreate(interaction: Discord.Interaction, ... args: any[]) {
+    private async onInteractionCreate(interaction: Discord.Interaction, args: any[]) {
 
         if (interaction.isCommand()) {
             const { commandName } = interaction;
@@ -139,12 +136,27 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
         }
         if (interaction.isButton()) {
             const { customId } = interaction;
-            this.interactionHandle(interaction, args, customId, this.buttons);
+            // this means we handle the button inside the command
+            if (customId.includes(":")) {
+                const [commandName, localCustomId] = customId.split(":");
+                const command = this.guildCommands.get(commandName) ?? this.globalCommands.get(commandName);
+                if (!command) return;
+                command.onButtonInteraction(interaction, args);
+            }
+            else this.interactionHandle(interaction, args, customId, this.buttons);
         }
         if (interaction.isSelectMenu()) {
             const { customId } = interaction;
-            this.interactionHandle(interaction, args, customId, this.selectMenus);
+            // this means we handle the select menu inside the command
+            if (customId.includes(":")) {
+                const [commandName, localCustomId] = customId.split(":");
+                const command = this.guildCommands.get(commandName) ?? this.globalCommands.get(commandName);
+                if (!command) return;
+                command.onSelectMenuInteraction(interaction, args);
+            }
+            else this.interactionHandle(interaction, args, customId, this.selectMenus);
         }
+        // TODO: code redundancy fix
     }
 
     private async interactionHandle<K, V extends CommandComponentHandlerBase>(interaction: ReplyableInteraction, args: any[], key: K, ... collections: Discord.Collection<K, V>[]) {
