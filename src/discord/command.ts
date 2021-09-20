@@ -19,21 +19,34 @@ export abstract class CommandHandler extends CommandComponentHandlerBase {
         return this.type == "GLOBAL";
     }
 
-    public onButtonInteraction(int: Discord.ButtonInteraction, args: any[]) {
-        const methodName = "handleButton" + (int.customId.split(":")[1] ?? int.customId);
-        if (this[methodName]) return (this[methodName] as (int: Discord.ButtonInteraction, ... args: any[]) => HandlerReturn)(int, ... args);
-        else if (this.handleButton) return this.handleButton(int, ... args);
+    public onComponentInteraction(int: Discord.MessageComponentInteraction, args: any[]) {
+        if (int.isButton()) {
+            const methodName = "handleButton" + (int.customId.split(":")[1] ?? int.customId);
+            const longRunningName = "button" + (int.customId.split(":")[1] ?? int.customId) + "LongRunning";
+            if (this[longRunningName] as boolean) int.deferUpdate();
+            if (this[methodName]) return (this[methodName] as (int: Discord.ButtonInteraction, ... args: any[]) => HandlerReturn)(int, ... args);
+            else if (this.handleButton) {
+                if (this.buttonLongRunning) int.deferUpdate();
+                return this.handleButton(int, ... args);
+            }
+        }
+        if (int.isSelectMenu()) {
+            const methodName = "handleSelectMenu" + (int.customId.split(":")[1] ?? int.customId);
+            const longRunningName = "selectMenu" + (int.customId.split(":")[1] ?? int.customId) + "LongRunning";
+            if (this[longRunningName] as boolean) int.deferUpdate();
+            if (this[methodName]) return (this[methodName] as (int: Discord.SelectMenuInteraction, ... args: any[]) => HandlerReturn)(int, ... args);
+            else if (this.handleSelectMenu) {
+                if (this.selectMenuLongRunning) int.deferUpdate();
+                return this.handleSelectMenu(int, ... args);
+            }
+        }
     }
 
-    public onSelectMenuInteraction(int: Discord.SelectMenuInteraction, args: any[]) {
-        const methodName = "handleSelectMenu" + (int.customId.split(":")[1] ?? int.customId);
-        if (this[methodName]) return (this[methodName] as (int: Discord.SelectMenuInteraction, ... args: any[]) => HandlerReturn)(int, ... args);
-        else if (this.handleSelectMenu) return this.handleSelectMenu(int, ... args);
-    }
+    protected handleButton?(int: Discord.ButtonInteraction, ... args: any[]): HandlerReturn;
+    protected readonly buttonLongRunning?: boolean;
 
-    protected abstract handleButton?(int: Discord.ButtonInteraction, ... args: any[]): HandlerReturn;
-
-    protected abstract handleSelectMenu?(int: Discord.SelectMenuInteraction, ... args: any[]): HandlerReturn;
+    protected handleSelectMenu?(int: Discord.SelectMenuInteraction, ... args: any[]): HandlerReturn;
+    protected readonly selectMenuLongRunning?: boolean;
 
     protected abstract override ftn(int: Discord.CommandInteraction, ...args: any[]): HandlerReturn;
 }

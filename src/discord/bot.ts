@@ -131,54 +131,66 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
     private async onInteractionCreate(interaction: Discord.Interaction, args: any[]) {
 
         if (interaction.isCommand()) {
+
             const { commandName } = interaction;
-            this.interactionHandle<string, CommandHandler>(interaction, args, commandName, this.guildCommands, this.globalCommands);
+
+            const handler = this.guildCommands.get(commandName) ?? this.globalCommands.get(commandName);
+            if (!handler) return;
+            if (handler.longRunning) interaction.deferReply();
+
+            let response;
+            try {
+                response = await handler.execute(interaction, ... args) || this.defaultResponse;
+            }
+            catch (err) {
+                console.error(err);
+                response = this.errorResponse;
+            }
+
+            try {
+                if (response && !interaction.replied) await interaction.reply(response);
+            }
+            catch (err) {
+                console.error(err);
+            }
         }
-        if (interaction.isButton()) {
+        if (interaction.isMessageComponent()) {
+
             const { customId } = interaction;
-            // this means we handle the button inside the command
+            let response;
+
+            // this means we handle the component inside the command
             if (customId.includes(":")) {
-                const [commandName, localCustomId] = customId.split(":");
+
+                const [commandName] = customId.split(":");
                 const command = this.guildCommands.get(commandName) ?? this.globalCommands.get(commandName);
                 if (!command) return;
-                command.onButtonInteraction(interaction, args);
+
+                response = await command.onComponentInteraction(interaction, args);
             }
-            else this.interactionHandle(interaction, args, customId, this.buttons);
-        }
-        if (interaction.isSelectMenu()) {
-            const { customId } = interaction;
-            // this means we handle the select menu inside the command
-            if (customId.includes(":")) {
-                const [commandName, localCustomId] = customId.split(":");
-                const command = this.guildCommands.get(commandName) ?? this.globalCommands.get(commandName);
-                if (!command) return;
-                command.onSelectMenuInteraction(interaction, args);
+            else if (interaction.isMessageComponent()) {
+
+                let handler;
+                if (interaction.isButton()) handler = this.buttons.get(customId);
+                if (interaction.isSelectMenu()) handler = this.selectMenus.get(customId);
+                if (!handler) return;
+                if (handler.longRunning) interaction.deferUpdate();
+
+                try {
+                    response = await handler.execute(interaction, ... args);
+                }
+                catch (err) {
+                    console.error(err);
+                    response = this.errorResponse;
+                }
             }
-            else this.interactionHandle(interaction, args, customId, this.selectMenus);
-        }
-        // TODO: code redundancy fix
-    }
-
-    private async interactionHandle<K, V extends CommandComponentHandlerBase>(interaction: ReplyableInteraction, args: any[], key: K, ... collections: Discord.Collection<K, V>[]) {
-
-        const handler = collections.map((v) => v.get(key)).reduce((a, b) => a ?? b);
-        if (!handler) return;
-
-        let response;
-
-        try {
-            response = await handler.execute(interaction, ... args);
-        }
-        catch (err) {
-            console.error(err);
-            response = this.errorResponse;
-        }
-
-        try {
-            if (response) await interaction.reply(response);
-        }
-        catch (err) {
-            console.error(err);
+            try {
+                if (response) await interaction.update(response);
+                else await interaction.update({ components: [] });
+            }
+            catch (err) {
+                console.error(err);
+            }
         }
     }
 }

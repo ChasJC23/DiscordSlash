@@ -1,8 +1,8 @@
 import { SlashCommandBuilder } from "@discordjs/builders";
 import * as Discord from "discord.js";
-import { GlobalCommand } from "../discord/command";
+import { GlobalCommandHandler } from "../discord";
 
-export default class ColourCommand extends GlobalCommand {
+export default class ColourCommand extends GlobalCommandHandler {
 
     public readonly longRunning = false;
     public readonly permissions = [];
