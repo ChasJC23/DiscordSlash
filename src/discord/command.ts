@@ -5,8 +5,6 @@ import { CommandComponentHandlerBase, HandlerConstructor, HandlerReturn } from "
 
 export abstract class CommandHandler extends CommandComponentHandlerBase {
 
-    [k: string]: any;
-    
     public abstract readonly slashData: Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">
     public abstract readonly type: "GUILD" | "GLOBAL";
     public abstract readonly permissions?: Discord.ApplicationCommandPermissionData[];
@@ -23,9 +21,11 @@ export abstract class CommandHandler extends CommandComponentHandlerBase {
         if (int.isButton()) {
             const methodName = "handleButton" + (int.customId.split(":")[1] ?? int.customId);
             const longRunningName = "button" + (int.customId.split(":")[1] ?? int.customId) + "LongRunning";
+            // @ts-expect-error for the string indexing. If an error comes up at runtime, it's because the user of the template is a dumb bitch
             if (this[longRunningName] as boolean) int.deferUpdate();
+            // @ts-expect-error
             if (this[methodName]) return (this[methodName] as (int: Discord.ButtonInteraction, ... args: any[]) => HandlerReturn)(int, ... args);
-            else if (this.handleButton) {
+            else {
                 if (this.buttonLongRunning) int.deferUpdate();
                 return this.handleButton(int, ... args);
             }
@@ -33,19 +33,25 @@ export abstract class CommandHandler extends CommandComponentHandlerBase {
         if (int.isSelectMenu()) {
             const methodName = "handleSelectMenu" + (int.customId.split(":")[1] ?? int.customId);
             const longRunningName = "selectMenu" + (int.customId.split(":")[1] ?? int.customId) + "LongRunning";
+            // @ts-expect-error
             if (this[longRunningName] as boolean) int.deferUpdate();
+            // @ts-expect-error
             if (this[methodName]) return (this[methodName] as (int: Discord.SelectMenuInteraction, ... args: any[]) => HandlerReturn)(int, ... args);
-            else if (this.handleSelectMenu) {
+            else {
                 if (this.selectMenuLongRunning) int.deferUpdate();
                 return this.handleSelectMenu(int, ... args);
             }
         }
     }
 
-    protected handleButton?(int: Discord.ButtonInteraction, ... args: any[]): HandlerReturn;
+    protected handleButton(int: Discord.ButtonInteraction, ... args: any[]): HandlerReturn {
+        return;
+    }
     protected readonly buttonLongRunning?: boolean;
 
-    protected handleSelectMenu?(int: Discord.SelectMenuInteraction, ... args: any[]): HandlerReturn;
+    protected handleSelectMenu(int: Discord.SelectMenuInteraction, ... args: any[]): HandlerReturn {
+        return;
+    }
     protected readonly selectMenuLongRunning?: boolean;
 
     protected abstract override ftn(int: Discord.CommandInteraction, ...args: any[]): HandlerReturn;

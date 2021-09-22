@@ -5,9 +5,11 @@ export type ReplyableInteraction = Discord.CommandInteraction | Discord.MessageC
 export abstract class HandlerBase {
 
     public readonly discordClient: Discord.Client;
+    public creationTime: Date;
 
     constructor(discordClient: Discord.Client) {
         this.discordClient = discordClient;
+        this.creationTime = new Date();
     }
 
     protected abstract ftn(... args: any[]): Discord.Awaited<any>;

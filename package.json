@@ -7,7 +7,7 @@
   },
   "name": "discordslash",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dst/index.js",
   "directories": {
     "test": "test"
   },

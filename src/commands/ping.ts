@@ -1,7 +1,9 @@
 import * as Discord from "discord.js";
-import { BetterSlashCommandBuilder } from "../discord/builders";
-import { GuildCommandHandler } from "../discord/command";
+import { BetterSlashCommandBuilder, GuildCommandHandler } from "../discord";
 
+function makeButton() {
+    return new Discord.MessageButton({ customId: "ping:MyBtn", style: "PRIMARY", label: Math.random().toString() });
+}
 
 export default class PingCommand extends GuildCommandHandler {
 
@@ -10,8 +12,8 @@ export default class PingCommand extends GuildCommandHandler {
     public readonly longRunning = false;
     public readonly permissions: Discord.ApplicationCommandPermissionData[] = [
         {
-            id: "369865089903230986",
-            type: "USER",
+            id: "774018907937308673",
+            type: "ROLE",
             permission: true
         }
     ];
@@ -21,12 +23,12 @@ export default class PingCommand extends GuildCommandHandler {
     .setDescription("EXCLUSIVE ping pong!")
 
     public override async ftn(int: Discord.CommandInteraction) {
-        const myBtn = new Discord.MessageButton({ customId: "ping:MyBtn", style: "PRIMARY", label: Math.random().toString() });
+        const myBtn = makeButton();
         await int.reply({ content: "pong!", components: [new Discord.MessageActionRow({ components: [myBtn] })] });
     }
 
     public async handleButtonMyBtn(int: Discord.ButtonInteraction) {
-        const myBtn = new Discord.MessageButton({ customId: "ping:MyBtn", style: "PRIMARY", label: Math.random().toString() });
+        const myBtn = makeButton();
         return { components: [new Discord.MessageActionRow({ components: [myBtn] })] };
     }
 }
