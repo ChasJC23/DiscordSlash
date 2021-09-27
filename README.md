@@ -42,18 +42,18 @@ Option  | Type  | Default value  | Description
 
 Option | Bit | Description
 ----|----|----
-INTERACTION_RECIEVE | `1 << 0` | Announce the collection of an interaction
-COMMAND_RECIEVE | `1 << 1` | Announce the identification of an interaction as a command
-COMPONENT_RECIEVE | `1 << 2` | Announce the identification of an interaction as a component
-DYNAMIC_COMPONENT | `1 << 3` | Announce the identification of an interaction as a dynamically handled component
-COMMAND_HANDLE | `1 << 4` | Supply information about the handling of commands
-COMPONENT_HANDLE | `1 << 5` | Supply information about the handling of components
-COMMAND_LOAD | `1 << 6` | Announce the loading of new commands, or reloading of existing commands
-COMMAND_REGISTER | `1 << 7` | Announce the registration of new and / or existing commands
-COMMAND_PERMISSIONS | `1 << 8` | Announce the successful change in permissions for a previously loaded command
-EVENT_LOAD | `1 << 9` | Announce the loading of new event handlers, or reloading of existing event handlers
-EVENT_START | `1 << 10` | Announce the starting of event handlers; communicating their availability of use
-COMPONENT_LOAD | `1 << 11` | Announce the loading of new component handlers, or reloading of existing component handlers
+INTERACTION_RECIEVE | `0b0000_0000_0001`, `1 << 0`, `0x001`, `1` | Announce the collection of an interaction
+COMMAND_RECIEVE | `0b0000_0000_0010`, `1 << 1`, `0x002`, `2` | Announce the identification of an interaction as a command
+COMPONENT_RECIEVE | `0b0000_0000_0100`, `1 << 2`, `0x004`, `4` | Announce the identification of an interaction as a component
+DYNAMIC_COMPONENT | `0b0000_0000_1000`, `1 << 3`, `0x008`, `8` | Announce the identification of an interaction as a dynamically handled component
+COMMAND_HANDLE | `0b0000_0001_0000`, `1 << 4`, `0x010`, `16` | Supply information about the handling of commands
+COMPONENT_HANDLE | `0b0000_0010_0000`, `1 << 5`, `0x020`, `32` | Supply information about the handling of components
+COMMAND_LOAD | `0b0000_0100_0000`, `1 << 6`, `0x040`, `64` | Announce the loading of new commands, or reloading of existing commands
+COMMAND_REGISTER | `0b0000_1000_0000`, `1 << 7`, `0x080`, `128` | Announce the registration of new and / or existing commands
+COMMAND_PERMISSIONS | `0b0001_0000_0000`, `1 << 8`, `0x100`, `256` | Announce the successful change in permissions for a previously loaded command
+EVENT_LOAD | `0b0010_0000_0000`, `1 << 9`, `0x200`, `512` | Announce the loading of new event handlers, or reloading of existing event handlers
+EVENT_START | `0b0100_0000_0000`, `1 << 10`, `0x400`, `1024` | Announce the starting of event handlers; communicating their availability of use
+COMPONENT_LOAD | `0b1000_0000_0000`, `1 << 11`, `0x800`, `2048` | Announce the loading of new component handlers, or reloading of existing component handlers
 
 ### Basics of creating commands
 In order to create a command, you must create a class that extends from either the `GlobalCommandHandler` or `GuildCommandHander` class in some way. This must then be set as the default export of the file:
@@ -178,7 +178,7 @@ class MyBot extends DiscordBot<MyGlobalCommandHandler, MyGuildCommandHandler, My
   }
 }
 ```
-# Extra handler arguments
+### Extra handler arguments
 If instead you wish to have extra data be inputted to the method used for the handler's execution, you can extend the appropriate classes in a similar way
 ```ts
 abstract class MyGlobalCommandHandler extends GlobalCommandHandler {
