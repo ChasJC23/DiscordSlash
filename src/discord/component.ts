@@ -3,7 +3,7 @@ import { CommandComponentHandlerBase, HandlerConstructor, HandlerReturn } from "
 
 export abstract class ComponentHandler extends CommandComponentHandlerBase {
 
-    public abstract readonly component: Discord.MessageButton | Discord.MessageSelectMenu;
+    public abstract readonly customId: string;
     public abstract readonly type: "BUTTON" | "SELECT_MENU";
 
     public isButton(): this is ButtonHandler {
@@ -19,7 +19,6 @@ export abstract class ComponentHandler extends CommandComponentHandlerBase {
 
 export abstract class ButtonHandler extends ComponentHandler {
 
-    public abstract readonly component: Discord.MessageButton;
     public readonly type = "BUTTON";
 
     protected abstract override ftn(int: Discord.ButtonInteraction, ... args: any[]): HandlerReturn;
@@ -27,7 +26,6 @@ export abstract class ButtonHandler extends ComponentHandler {
 
 export abstract class SelectMenuHandler extends ComponentHandler {
 
-    public abstract readonly component: Discord.MessageSelectMenu;
     public readonly type = "SELECT_MENU";
 
     protected abstract override ftn(int: Discord.SelectMenuInteraction, ... args: any[]): HandlerReturn;

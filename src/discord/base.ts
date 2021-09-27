@@ -33,4 +33,5 @@ export abstract class CommandComponentHandlerBase extends HandlerBase {
 }
 
 export type HandlerConstructor<T extends HandlerBase> = new (discordClient: Discord.Client, ... args: any[]) => T;
-export type HandlerReturn = Discord.Awaited<Discord.MessagePayload | Discord.InteractionReplyOptions | string | void>;
+export type InteractionResponse = Discord.MessagePayload | Discord.InteractionReplyOptions | string;
+export type HandlerReturn = Discord.Awaited<InteractionResponse | void>;

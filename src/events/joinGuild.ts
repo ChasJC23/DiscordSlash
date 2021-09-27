@@ -6,7 +6,7 @@ export default class JoinGuildHandler extends EventHandler<"guildCreate"> {
     public readonly eventType = "guildCreate";
     public readonly oneTime = false;
 
-    public override ftn(newGuild: Discord.Guild) {
+    protected override ftn(newGuild: Discord.Guild) {
         newGuild.systemChannel?.send("Hello world!");
     }
 }

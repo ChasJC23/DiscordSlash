@@ -9,7 +9,8 @@ export abstract class EventHandler<K extends keyof Discord.ClientEvents> extends
     protected abstract override ftn(... args: Discord.ClientEvents[K]): Discord.Awaited<void>;
 
     public start() {
-        this.discordClient.on(this.eventType, (... args: Discord.ClientEvents[K]) => this.ftn(... args));
+        if (this.oneTime) this.discordClient.once(this.eventType, (... args: Discord.ClientEvents[K]) => this.ftn(... args))
+        else this.discordClient.on(this.eventType, (... args: Discord.ClientEvents[K]) => this.ftn(... args));
     }
 }
 

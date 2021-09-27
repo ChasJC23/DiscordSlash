@@ -4,7 +4,6 @@ import { REST } from "@discordjs/rest";
 import { APIApplicationCommand, Routes } from "discord-api-types/v9";
 import { walkdirSync } from "../util/fsp";
 import { watch } from "fs";
-import * as process from "process";
 
 export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends GuildCommandHandler, EventT extends EventHandler<any>, ButtonT extends ButtonHandler, SelectMenuT extends SelectMenuHandler> {
 
@@ -175,14 +174,10 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
 
         const handlerUpdate = (obj: this, handler: ComponentHandler) => {
             if (obj.logSettings & LoggingOptions.COMPONENT_LOAD) {
-                console.log(`[LOG] Component ${handler.component.customId} handler has been reloaded due to an update`);
+                console.log(`[LOG] Component ${handler.customId} handler has been reloaded due to an update`);
             }
-            if (!handler.component.customId) {
-                console.error(`[ERR] all components must have a custom ID`);
-                return;
-            }
-            if (handler.isButton()) obj.buttons.set(handler.component.customId, handler as ButtonT);
-            if (handler.isSelectMenu()) obj.selectMenus.set(handler.component.customId, handler as SelectMenuT);
+            if (handler.isButton()) obj.buttons.set(handler.customId, handler as ButtonT);
+            if (handler.isSelectMenu()) obj.selectMenus.set(handler.customId, handler as SelectMenuT);
         }
 
         const componentHandlers = this.loadDir<ComponentHandler>(componentPath, constructorArgs, handlerUpdate);
@@ -191,12 +186,8 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
         }
 
         componentHandlers.forEach((handler) => {
-            if (!handler.component.customId) {
-                console.error(`[ERR] all components must have a custom ID`);
-                return;
-            }
-            if (handler.isButton()) this.buttons.set(handler.component.customId, handler as ButtonT);
-            if (handler.isSelectMenu()) this.selectMenus.set(handler.component.customId, handler as SelectMenuT);
+            if (handler.isButton()) this.buttons.set(handler.customId, handler as ButtonT);
+            if (handler.isSelectMenu()) this.selectMenus.set(handler.customId, handler as SelectMenuT);
         })
     }
 
