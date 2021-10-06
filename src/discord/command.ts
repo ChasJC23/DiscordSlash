@@ -3,7 +3,17 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { APIInteractionGuildMember } from "discord-api-types";
 import { CommandComponentHandlerBase, HandlerConstructor, HandlerReturn } from ".";
 
+type handleButtonFtnName = `handleButton${string}`;
+type handleSelectMenuFtnName = `handleSelectMenu${string}`;
+
+type buttonLongRunningConstName = `button${string}LongRunning`;
+type selectMenuLongRunningConstName = `selectMenu${string}LongRunning`;
+
 export abstract class CommandHandler extends CommandComponentHandlerBase {
+
+    [x: handleButtonFtnName]: (int: Discord.ButtonInteraction, ... args: any[]) => HandlerReturn;
+    [x: handleSelectMenuFtnName]: (int: Discord.SelectMenuInteraction, ... args: any[]) => HandlerReturn;
+    [x: buttonLongRunningConstName | selectMenuLongRunningConstName]: boolean | undefined;
 
     public abstract readonly slashData: Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">
     public abstract readonly type: "GUILD" | "GLOBAL";
@@ -19,24 +29,20 @@ export abstract class CommandHandler extends CommandComponentHandlerBase {
 
     public onComponentInteraction(int: Discord.MessageComponentInteraction, args: any[]) {
         if (int.isButton()) {
-            const methodName = "handleButton" + (int.customId.split(":")[1] ?? int.customId);
-            const longRunningName = "button" + (int.customId.split(":")[1] ?? int.customId) + "LongRunning";
-            // @ts-expect-error for the string indexing. If an error comes up at runtime, it's because the user of the template is a dumb bitch
-            if (this[longRunningName] as boolean) int.deferUpdate();
-            // @ts-expect-error
-            if (this[methodName]) return (this[methodName] as (int: Discord.ButtonInteraction, ... args: any[]) => HandlerReturn)(int, ... args);
+            const methodName: handleButtonFtnName = `handleButton${int.customId.split(":")[1] ?? int.customId}`;
+            const longRunningName: buttonLongRunningConstName = `button${int.customId.split(":")[1] ?? int.customId}LongRunning`;
+            if (this[longRunningName]) int.deferUpdate();
+            if (this[methodName]) return this[methodName](int, ... args);
             else {
                 if (this.buttonLongRunning) int.deferUpdate();
                 return this.handleButton(int, ... args);
             }
         }
         if (int.isSelectMenu()) {
-            const methodName = "handleSelectMenu" + (int.customId.split(":")[1] ?? int.customId);
-            const longRunningName = "selectMenu" + (int.customId.split(":")[1] ?? int.customId) + "LongRunning";
-            // @ts-expect-error
-            if (this[longRunningName] as boolean) int.deferUpdate();
-            // @ts-expect-error
-            if (this[methodName]) return (this[methodName] as (int: Discord.SelectMenuInteraction, ... args: any[]) => HandlerReturn)(int, ... args);
+            const methodName: handleSelectMenuFtnName = `handleSelectMenu${int.customId.split(":")[1] ?? int.customId}`;
+            const longRunningName: selectMenuLongRunningConstName = `selectMenu${int.customId.split(":")[1] ?? int.customId}LongRunning`;
+            if (this[longRunningName]) int.deferUpdate();
+            if (this[methodName]) return this[methodName](int, ... args);
             else {
                 if (this.selectMenuLongRunning) int.deferUpdate();
                 return this.handleSelectMenu(int, ... args);
