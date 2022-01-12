@@ -65,7 +65,7 @@ This newly extended class must then give values to the following attributes, and
 export default class FooCommand extends GlobalCommandHandler {
   public readonly longRunning: boolean = false; // a value indicating whether the execution time of the command is expected to exceed 3 seconds
   public readonly permissions?: Discord.ApplicationCommandPermissionData[] = []; // the permissions for the command
-  public readonly slashData: Discord.SlashCommandBuilder = new Discord.SlashCommandBuilder(); // the underlying data sent to Discord during registration. BetterSlashCommandBuilder may also be used.
+  public readonly slashData: Discord.SlashCommandBuilder = new Discord.SlashCommandBuilder(); // the underlying data sent to Discord during registration.
   protected ftn(int: Discord.CommandInteraction): HandlerReturn { 
     // the code run when the command interaction is received
   }
