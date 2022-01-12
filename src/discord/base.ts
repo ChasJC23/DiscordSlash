@@ -12,7 +12,7 @@ export abstract class HandlerBase {
         this.creationTime = new Date();
     }
 
-    protected abstract ftn(... args: any[]): Discord.Awaited<any>;
+    protected abstract ftn(... args: any[]): Discord.Awaitable<any>;
 }
 
 export abstract class CommandComponentHandlerBase extends HandlerBase {
@@ -34,4 +34,4 @@ export abstract class CommandComponentHandlerBase extends HandlerBase {
 
 export type HandlerConstructor<T extends HandlerBase> = new (discordClient: Discord.Client, ... args: any[]) => T;
 export type InteractionResponse = Discord.MessagePayload | Discord.InteractionReplyOptions | string;
-export type HandlerReturn = Discord.Awaited<InteractionResponse | void>;
+export type HandlerReturn = Discord.Awaitable<InteractionResponse | void>;

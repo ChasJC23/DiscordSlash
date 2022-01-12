@@ -1,5 +1,6 @@
 import * as Discord from "discord.js";
-import { BetterSlashCommandBuilder, GuildCommandHandler } from "../discord";
+import { GuildCommandHandler } from "../discord";
+import { SlashCommandBuilder } from "@discordjs/builders";
 
 function makeButton() {
     return new Discord.MessageButton({ customId: "ping:MyBtn", style: "PRIMARY", label: Math.random().toString() });
@@ -17,8 +18,8 @@ export default class PingCommand extends GuildCommandHandler {
             permission: true
         }
     ];
-    public readonly slashData = new BetterSlashCommandBuilder()
-    .setDefaultPerms(false)
+    public readonly slashData = new SlashCommandBuilder()
+    .setDefaultPermission(false)
     .setName("ping")
     .setDescription("EXCLUSIVE ping pong!")
 

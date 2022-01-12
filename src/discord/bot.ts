@@ -89,6 +89,13 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
             this.globalCommands.set(cmdResponse.id, localCmd as GlobalT);
 
             if (this.homeGuildId) {
+                //@ts-expect-error not allowed to make an instance of the class that allows me to set permissions???
+                // in the guides they suggest requesting this information a second time to get the class, but why not just allow me to use what I've already got???
+                // I get that they don't want users to have to deal with low level API types, but that's literally what we get in response to the REST request.
+                // Additionally, they pull the ID for the command in their example out of thin air,
+                // meaning you literally need to make use of that first APIApplicationCommand response type when you put the command up in the first place.
+                // This is a dumb error that only arose because they decided to make this constructor private while I was halfway through developing this system.
+                // Completely arbitrary decision, doesn't help anyone. Literally hides away really useful functionality of the newer API.
                 const commandInfo = new Discord.ApplicationCommand(this.discordClient, cmdResponse, undefined, this.homeGuildId);
                 if (!localCmd?.permissions) return;
                 await commandInfo.permissions.set({ permissions: localCmd.permissions });
@@ -128,6 +135,7 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
                     const localCmd = filtered.find((v) => v.slashData.name == cmdResponse.name);
                     this.guildCommands.set(cmdResponse.id, localCmd as GuildT);
 
+                    //@ts-expect-error see line 92
                     const commandInfo = new Discord.ApplicationCommand(this.discordClient, cmdResponse, undefined, guildId);
                     if (!localCmd || !localCmd.permissions) return;
                     await commandInfo.permissions.set({ permissions: localCmd.permissions });
@@ -228,6 +236,7 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
                 console.log(`[LOG] Global command ${command.slashData.name} has been registered`);
             }
             if (this.homeGuildId) {
+                //@ts-expect-error see line 92
                 const commandInfo = new Discord.ApplicationCommand(this.discordClient, response, undefined, this.homeGuildId);
                 if (!command.permissions) return;
                 await commandInfo.permissions.set({ permissions: command.permissions });
@@ -243,6 +252,7 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
                 if (this.logSettings & LoggingOptions.COMMAND_REGISTER) {
                     console.log(`[LOG] Guild command ${command.slashData.name} has been registered in guild ID ${guildId}`);
                 }
+                //@ts-expect-error see line 92
                 const commandInfo = new Discord.ApplicationCommand(this.discordClient, response, undefined, guildId);
                 if (!command.permissions) return;
                 await commandInfo.permissions.set({ permissions: command.permissions });
@@ -277,6 +287,7 @@ export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends Gui
                 console.error(`[ERR] recieved command interaction ${commandName} with ID ${commandId} could not be identified.`);
                 return;
             }
+            // redundant question mark?
             if (handler.longRunning) interaction.deferReply();
 
             if (this.logSettings & LoggingOptions.COMMAND_HANDLE) {

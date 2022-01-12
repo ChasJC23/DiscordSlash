@@ -39,7 +39,7 @@ export default class ColourCommand extends GlobalCommandHandler {
         ])
     )
 
-    public override ftn(int: Discord.CommandInteraction) {
+    public override async ftn(int: Discord.CommandInteraction) {
 
         const colour = int.options.getString("colour", true) as "RED" | "YELLOW" | "GREEN" | "BLUE";
         const index = int.options.getInteger("index", false);
@@ -53,6 +53,6 @@ export default class ColourCommand extends GlobalCommandHandler {
         }
         replyEmbed.setColor(colour);
         
-        int.reply({ embeds: [replyEmbed] });
+        await int.reply({ embeds: [replyEmbed] });
     }
 }
