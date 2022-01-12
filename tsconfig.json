@@ -5,6 +5,7 @@
     "moduleResolution": "Node",
     "rootDir": "./src",
     "sourceMap": true,
+    "declaration": true,
     "outDir": "./dst",
     "strict": true,
     "skipLibCheck": true,

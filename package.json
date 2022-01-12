@@ -3,7 +3,7 @@
     "@types/mocha": "^9.0.0",
     "mocha": "^9.1.1"
   },
-  "name": "discordslash",
+  "name": "better-discord-slash",
   "version": "1.0.0",
   "main": "dst/index.js",
   "directories": {
@@ -16,7 +16,7 @@
     "discord.js": "^13.5.1"
   },
   "scripts": {
-    "test": "mocha",
+    "test": "ts-node tests/index.ts",
     "build": "tsc"
   },
   "keywords": [],

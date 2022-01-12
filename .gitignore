@@ -3,3 +3,5 @@ node_modules/
 config.json
 .vscode
 tsconfig.tsbuildinfo
+tests/
+.npmignore

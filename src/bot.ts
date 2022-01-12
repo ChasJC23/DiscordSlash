@@ -2,7 +2,7 @@ import * as Discord from "discord.js";
 import { ButtonHandler, CommandHandler, ComponentHandler, DiscordBotOptions, EventHandler, GlobalCommandHandler, GuildCommandHandler, HandlerBase, HandlerConstructor, LoggingOptions, SelectMenuHandler } from ".";
 import { REST } from "@discordjs/rest";
 import { APIApplicationCommand, Routes } from "discord-api-types/v9";
-import { walkdirSync } from "../util/fsp";
+import { walkdirSync } from "./util/fsp";
 import { watch } from "fs";
 
 export class DiscordBot<GlobalT extends GlobalCommandHandler, GuildT extends GuildCommandHandler, EventT extends EventHandler<any>, ButtonT extends ButtonHandler, SelectMenuT extends SelectMenuHandler> {
